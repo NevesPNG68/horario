@@ -162,7 +162,11 @@ td{font-size:13px}
   .card,.decision-metric{min-height:132px;padding:18px 20px;border-radius:var(--radius)}
   .decision-metric{display:flex;flex-direction:column}
   .decision-metric small{margin-top:auto}
-  .chart{height:240px;gap:5px}
+  .grid2{min-width:0}
+  .grid2>.panel{width:100%;min-width:0;overflow:hidden}
+  .chart{width:100%;min-width:0;height:240px;gap:5px;overflow:hidden}
+  .barcol{min-width:0}
+  .barvalue{font-size:9px;line-height:1.1;text-align:center}
   .barlabel{font-size:9px}
 }
 @media print{.actions,.filters{display:none!important}body{background:#fff}.app{padding:0}.panel,.card,.hero{box-shadow:none;break-inside:avoid}}
