@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Faturamento da Madrugada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --bg:#0A1513;
+  --bg2:#0E1B19;
+  --surface:#132623;
+  --surface2:#183330;
+  --text:#EAF3F0;
+  --muted:#9DB3AE;
+  --subtle:#5E7873;
+  --line:#1E3936;
+  --primary:#33C9B8;
+  --primary-deep:#1D6E64;
+  --primary-soft:#1D6E64;
+  --primary-glow:rgba(51,201,184,.16);
+  --primary2:#EFB24A;
+  --amber-deep:#8A6420;
+  --amber-soft:#8A6420;
+  --amber-glow:rgba(239,178,74,.14);
+  --green:#33C9B8;
+  --amber:#EFB24A;
+  --red:#F0705A;
+  --red-soft:#7A3327;
+  --red-glow:rgba(240,112,90,.16);
+  --shadow:0 12px 32px rgba(0,0,0,.35);
+  --radius:18px;
+}
+html[data-theme="light"] {
+  --bg:#EEF3F1;
+  --bg2:#F7FAF9;
+  --surface:#FFFFFF;
+  --surface2:#FFFFFF;
+  --text:#0E211E;
+  --muted:#4C6560;
+  --subtle:#7C948E;
+  --line:#DCE6E2;
+  --primary:#158C7D;
+  --primary-deep:#158C7D;
+  --primary-soft:#D4F0EB;
+  --primary-glow:rgba(21,140,125,.10);
+  --primary2:#B4790C;
+  --amber-deep:#B4790C;
+  --amber-soft:#FCE9C4;
+  --amber-glow:rgba(180,121,12,.12);
+  --green:#158C7D;
+  --amber:#B4790C;
+  --red:#C64530;
+  --red-soft:#FBDCD4;
+  --red-glow:rgba(198,69,48,.10);
+  --shadow:0 12px 28px rgba(20,40,35,.10);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:var(--font-body);color:var(--text);
+  background:var(--bg);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.app{width:min(1500px,100%);margin:0 auto;padding:22px}
+.hero{
+  background:var(--surface);
+  border:1px solid var(--line);box-shadow:var(--shadow);border-radius:28px;
+  padding:26px;display:flex;justify-content:space-between;gap:20px;align-items:center;
+}
+html[data-theme="dark"] .hero{background:linear-gradient(135deg,var(--bg2),var(--surface2))}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--primary);font-weight:800;margin:0 0 8px}
+h1,h2{font-family:var(--font-display)}
+h1{font-size:clamp(26px,4vw,42px);line-height:1.05;margin:0;letter-spacing:-.03em}
+.subtitle{color:var(--muted);margin:10px 0 0;max-width:900px;line-height:1.5}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+button,.btn{
+  appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--text);
+  border-radius:12px;padding:11px 15px;font-weight:700;cursor:pointer;transition:transform .1s,border-color .15s,background .15s
+}
+button:hover{transform:translateY(-1px);border-color:var(--primary)}
+.filters{
+  margin-top:18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)
+}
+.filter label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:900;margin:0 0 6px}
+select,.filter input{
+  width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--line);
+  border-radius:12px;padding:11px;font-weight:800;outline:none
+}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px}
+.card,.panel{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)
+}
+.card{padding:18px 20px;min-height:132px;transition:transform .15s,border-color .15s,box-shadow .15s}
+.card:hover{transform:translateY(-1px);box-shadow:0 16px 36px rgba(0,0,0,.18)}
+.card .label{font-size:11.5px;color:var(--subtle);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.card .value{font-family:var(--font-display);font-size:clamp(23px,2.3vw,28px);font-weight:600;margin-top:8px;letter-spacing:-.3px}
+.card .hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+.card-accent-teal{border-color:var(--primary-soft);background:linear-gradient(160deg,var(--primary-glow),transparent 60%)}
+.card-accent-gold{border-color:var(--amber-soft);background:linear-gradient(160deg,var(--amber-glow),transparent 60%)}
+.card-accent-coral{border-color:var(--red-soft);background:linear-gradient(160deg,var(--red-glow),transparent 60%)}
+.decision-panel{margin-top:16px;display:grid;grid-template-columns:minmax(220px,1fr) 2fr;gap:20px;align-items:center}
+.decision-panel h2{font-size:18px;margin:0}
+.decision-panel .desc{color:var(--muted);font-size:12px;line-height:1.45;margin:6px 0 0}
+.decision-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.decision-metric{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.decision-metric .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--subtle);font-weight:700}
+.decision-metric strong{display:block;font-family:var(--font-display);font-size:20px;margin-top:6px;letter-spacing:-.02em}
+.decision-metric small{display:block;color:var(--muted);font-size:11px;line-height:1.35;margin-top:5px}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:16px}
+.panel{padding:18px}
+.panel h2{font-size:18px;margin:0}
+.panel .desc{color:var(--muted);font-size:12px;margin:6px 0 14px}
+.chart{display:flex;align-items:flex-end;gap:10px;height:300px;padding:12px 4px 6px;border-top:1px solid var(--line)}
+.barcol{flex:1;min-width:42px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:7px}
+.barvalue{font-size:11px;font-weight:900;color:var(--muted);height:28px;display:flex;align-items:flex-end}
+.bar{width:70%;min-height:2px;border-radius:10px 10px 3px 3px;background:linear-gradient(180deg,var(--primary),var(--primary-deep));box-shadow:0 0 18px rgba(51,201,184,.16)}
+.barlabel{font-size:10px;text-align:center;color:var(--muted);line-height:1.15;min-height:30px}
+.week-chart .bar{background:linear-gradient(180deg,var(--amber),var(--amber-deep))}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface2);position:sticky;top:0}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:nth-child(3),td:nth-child(3){text-align:left}
+td{font-size:13px}
+.good{color:var(--green)}
+.note{margin-top:16px;padding:14px 16px;border-left:4px solid var(--green);background:rgba(51,201,184,.10);border-radius:12px;color:var(--muted);line-height:1.5;font-size:13px}
+.heat td{text-align:right}
+
+.heat .rowlabel{text-align:left;font-weight:900}
+.heatcell{border-radius:8px;font-weight:900}
+.heat tfoot td{font-weight:800;background:var(--surface2);border-top:1px solid var(--line)}
+.heat tfoot tr:nth-last-child(-n+2) td{color:var(--green)}
+.heat .summary-label{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.empty{color:var(--muted);text-align:center;padding:30px}
+.footer{color:var(--muted);font-size:11px;margin:18px 2px 4px;text-align:right}
+
+.multi{position:relative}
+.multi-btn{width:100%;text-align:left;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px;font-weight:800;cursor:pointer}
+.multi-menu{display:none;position:absolute;z-index:50;left:0;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px;max-height:310px;overflow:auto}
+.multi.open .multi-menu{display:block}
+.multi-option{display:flex;align-items:center;gap:9px;padding:8px 6px;border-radius:9px;cursor:pointer}
+.multi-option:hover{background:var(--surface2)}
+.multi-option input{width:16px;height:16px;accent-color:var(--green)}
+.multi-actions{display:flex;gap:8px;padding:4px 4px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.multi-actions button{flex:1;padding:8px 10px;font-size:11px}
+
+@media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.decision-panel{grid-template-columns:1fr}.filters{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.app{padding:12px}.hero{padding:18px;align-items:flex-start;flex-direction:column}.cards,.decision-metrics{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.chart{height:240px;gap:5px}.barlabel{font-size:9px}}
+@media print{.actions,.filters{display:none!important}body{background:#fff}.app{padding:0}.panel,.card,.hero{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Análise operacional</p>
+      <h1>Faturamento da Madrugada</h1>
+      <p class="subtitle">Análise do valor líquido entre 00:00 e 05:00, em faixas de 30 minutos. Para fins operacionais, toda madrugada é atribuída ao dia anterior.</p>
+    </div>
+    <div class="actions">
+      <button id="themeBtn">Modo claro</button>
+      <button onclick="window.print()">Imprimir / PDF</button>
+      <button id="csvBtn">Exportar resumo CSV</button>
+    </div>
+  </section>
+
+  <section class="filters">
+    <div class="filter"><label>Mês operacional</label>
+      <div class="multi" id="monthMulti">
+        <button type="button" class="multi-btn" id="monthBtn">Todos os meses</button>
+        <div class="multi-menu" id="monthMenu"></div>
+      </div>
+    </div>
+    <div class="filter"><label>Dia da semana operacional</label>
+      <div class="multi" id="weekdayMulti">
+        <button type="button" class="multi-btn" id="weekdayBtn">Todos os dias</button>
+        <div class="multi-menu" id="weekdayMenu"></div>
+      </div>
+    </div>
+    <div class="filter"><label>Faixa de horário</label>
+      <div class="multi" id="bandMulti">
+        <button type="button" class="multi-btn" id="bandBtn">Todas as faixas</button>
+        <div class="multi-menu" id="bandMenu"></div>
+      </div>
+    </div>
+    <div class="filter"><label>Visão</label>
+      <select id="metricFilter">
+        <option value="total">Faturamento total</option>
+        <option value="avgday">Média por dia operacional</option>
+      </select>
+    </div>
+    <div class="filter"><label>MC ajustada (%)</label><input id="marginRate" type="number" min="0" max="100" step="0.01" value="50.07"></div>
+  </section>
+
+  <section class="cards">
+    <article class="card card-accent-teal"><div class="label">Faturamento líquido</div><div class="value" id="kpiRevenue">—</div><div class="hint" id="kpiRevenueHint"></div></article>
+    <article class="card card-accent-gold"><div class="label">Média por dia operacional</div><div class="value" id="kpiAvgDay">—</div><div class="hint" id="kpiDays"></div></article>
+    <article class="card card-accent-teal"><div class="label">Faixa mais forte</div><div class="value" id="kpiBestBand">—</div><div class="hint" id="kpiBestBandHint"></div></article>
+    <article class="card card-accent-gold"><div class="label">Dia mais forte</div><div class="value" id="kpiBestWd">—</div><div class="hint" id="kpiBestWdHint"></div></article>
+    <article class="card card-accent-coral"><div class="label">Lançamentos</div><div class="value" id="kpiTx">—</div><div class="hint">Quantidade de registros no filtro atual</div></article>
+  </section>
+
+  <section class="panel decision-panel">
+    <div>
+      <h2>Simulação pelo índice de MC</h2>
+      <div class="desc">Projeção sobre o faturamento filtrado com base no índice de MC Ajustada. Não representa custos apurados da operação.</div>
+    </div>
+    <div class="decision-metrics">
+      <div class="decision-metric"><span class="label">Índice aplicado</span><strong id="marginRateDisplay">—</strong><small>MC Ajustada informada acima</small></div>
+      <div class="decision-metric"><span class="label">Parcela projetada para custos variáveis</span><strong id="variableCostImpact">—</strong><small id="variableCostHint"></small></div>
+      <div class="decision-metric"><span class="label">Saldo para custos fixos e lucro</span><strong id="marginImpact">—</strong><small id="marginImpactHint"></small></div>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="panel">
+      <h2>Faturamento por faixa de 30 minutos</h2>
+      <div class="desc">Com os filtros de mês e dia da semana aplicados.</div>
+      <div class="chart" id="bandChart"></div>
+    </div>
+    <div class="panel">
+      <h2>Faturamento por dia da operação</h2>
+      <div class="desc">Ex.: madrugada civil de segunda-feira = domingo operacional.</div>
+      <div class="chart week-chart" id="weekdayChart"></div>
+    </div>
+  </section>
+
+  <section class="panel" style="margin-top:16px">
+    <h2>Mapa mensal × faixa de horário</h2>
+    <div class="desc">Compara a receita líquida dos meses ativos por faixa; ao final, mostra o impacto mensal projetado de encerrar cada horário.</div>
+    <div class="table-wrap"><table class="heat" id="heatTable"></table></div>
+  </section>
+
+  <section class="panel" style="margin-top:16px">
+    <h2>Detalhamento</h2>
+    <div class="desc">Mês operacional, dia da semana, faixa, faturamento, média por ocorrência, lançamentos e participação no filtro.</div>
+    <div class="table-wrap"><table id="detailTable"></table></div>
+  </section>
+
+  <div class="note">
+    <strong>Regra aplicada:</strong> para registros de 00:00 a 05:00, a <strong>data operacional = data da coluna B − 1 dia</strong>. Assim, <strong>segunda-feira na matriz significa a operação de segunda cuja madrugada ocorre na terça-feira</strong>. Portanto, a madrugada de sábado pertence à operação de sexta-feira. O mês também é recalculado a partir dessa data operacional; assim, a madrugada de 01/02 pertence a janeiro.
+  </div>
+
+  <div class="footer" id="footerMeta"></div>
+</main>
+
+<script>
+const DB = {"records":[{"month":"2026-01","monthLabel":"Jan/26","weekday":1,"weekdayLabel":"Terça","band":"00:00 - 00:30","revenue":125.022,"transactions":5,"dates":["2026-01-06","2026-01-13","2026-01-20"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":174.388,"transactions":6,"dates":["2026-01-08","2026-01-15","2026-01-22"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":3,"weekdayLabel":"Quinta","band":"00:30 - 01:00","revenue":64.308,"transactions":1,"dates":["2026-01-15"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":4987.3544,"transactions":261,"dates":["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":5186.788,"transactions":251,"dates":["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":3607.9566,"transactions":186,"dates":["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":2321.7238,"transactions":116,"dates":["2026-01-02","2026-01-09","2026-01-16","2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":980.127,"transactions":54,"dates":["2026-01-02","2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":587.0352,"transactions":28,"dates":["2026-01-23","2026-01-30"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":5512.7013,"transactions":284,"dates":["2026-01-03","2026-01-10","2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":5447.369,"transactions":281,"dates":["2026-01-03","2026-01-10","2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":4161.4574,"transactions":229,"dates":["2026-01-03","2026-01-10","2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":4147.8173,"transactions":222,"dates":["2026-01-03","2026-01-10","2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":2337.153,"transactions":124,"dates":["2026-01-03","2026-01-10","2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":1084.9141,"transactions":65,"dates":["2026-01-17","2026-01-24","2026-01-31"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":80.5945,"transactions":6,"dates":["2026-01-24"]},{"month":"2026-01","monthLabel":"Jan/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":64.216,"transactions":1,"dates":["2026-01-04"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":0,"weekdayLabel":"Segunda","band":"00:00 - 00:30","revenue":487.4058,"transactions":24,"dates":["2026-02-16"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":0,"weekdayLabel":"Segunda","band":"00:30 - 01:00","revenue":99.96,"transactions":3,"dates":["2026-02-16"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":2,"weekdayLabel":"Quarta","band":"00:00 - 00:30","revenue":248.308,"transactions":9,"dates":["2026-02-11"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":327.5284,"transactions":14,"dates":["2026-02-05","2026-02-26"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":5516.0731,"transactions":249,"dates":["2026-02-06","2026-02-13","2026-02-20","2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":4207.2801,"transactions":206,"dates":["2026-02-06","2026-02-13","2026-02-20","2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":2795.66,"transactions":147,"dates":["2026-02-06","2026-02-13","2026-02-20","2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":1814.37,"transactions":102,"dates":["2026-02-06","2026-02-13","2026-02-20","2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":878.6166,"transactions":50,"dates":["2026-02-06","2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":284.1302,"transactions":14,"dates":["2026-02-27"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":5406.0865,"transactions":294,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":5360.7461,"transactions":265,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":5140.3927,"transactions":260,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":3572.3004,"transactions":177,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":2305.8762,"transactions":128,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":1011.4003,"transactions":63,"dates":["2026-02-07","2026-02-14","2026-02-21","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":249.8896,"transactions":16,"dates":["2026-02-14","2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"03:30 - 04:00","revenue":21.736,"transactions":1,"dates":["2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":5,"weekdayLabel":"Sábado","band":"04:00 - 04:30","revenue":65.208,"transactions":5,"dates":["2026-02-28"]},{"month":"2026-02","monthLabel":"Fev/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":106.5621,"transactions":6,"dates":["2026-02-15"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":2,"weekdayLabel":"Quarta","band":"00:00 - 00:30","revenue":122.7218,"transactions":7,"dates":["2026-03-11","2026-03-18"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":246.5504,"transactions":14,"dates":["2026-03-12","2026-03-19"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":3,"weekdayLabel":"Quinta","band":"00:30 - 01:00","revenue":150.3772,"transactions":8,"dates":["2026-03-19"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":5342.6149,"transactions":288,"dates":["2026-03-06","2026-03-13","2026-03-20","2026-03-27"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":5086.5543,"transactions":282,"dates":["2026-03-06","2026-03-13","2026-03-20","2026-03-27"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":3251.8463,"transactions":178,"dates":["2026-03-06","2026-03-13","2026-03-20","2026-03-27"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":2667.5223,"transactions":150,"dates":["2026-03-06","2026-03-13","2026-03-20","2026-03-27"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":700.5405,"transactions":46,"dates":["2026-03-06","2026-03-13","2026-03-20","2026-03-27"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":91.312,"transactions":3,"dates":["2026-03-06","2026-03-20"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":6941.6549,"transactions":366,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":6216.5925,"transactions":344,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":5995.2567,"transactions":337,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":5801.8556,"transactions":297,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":3739.5273,"transactions":214,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":2302.93,"transactions":136,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":533.9131,"transactions":39,"dates":["2026-03-07","2026-03-14","2026-03-21","2026-03-28"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":5,"weekdayLabel":"Sábado","band":"03:30 - 04:00","revenue":76.7398,"transactions":6,"dates":["2026-03-07","2026-03-21"]},{"month":"2026-03","monthLabel":"Mar/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":261.676,"transactions":9,"dates":["2026-03-01","2026-03-15","2026-03-22"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"00:00 - 00:30","revenue":1597.427,"transactions":68,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"00:30 - 01:00","revenue":867.9078,"transactions":44,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"01:00 - 01:30","revenue":517.1633,"transactions":28,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"01:30 - 02:00","revenue":293.1352,"transactions":15,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"02:00 - 02:30","revenue":133.38,"transactions":5,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":0,"weekdayLabel":"Segunda","band":"02:30 - 03:00","revenue":5.928,"transactions":1,"dates":["2026-04-20"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":1,"weekdayLabel":"Terça","band":"00:00 - 00:30","revenue":57.0094,"transactions":3,"dates":["2026-04-21"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":2285.4297,"transactions":111,"dates":["2026-04-02","2026-04-16","2026-04-30"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"00:30 - 01:00","revenue":1834.4106,"transactions":89,"dates":["2026-04-02","2026-04-30"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"01:00 - 01:30","revenue":1677.1266,"transactions":84,"dates":["2026-04-02","2026-04-30"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"01:30 - 02:00","revenue":1442.6925,"transactions":69,"dates":["2026-04-02","2026-04-30"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"02:00 - 02:30","revenue":509.0276,"transactions":27,"dates":["2026-04-02"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":3,"weekdayLabel":"Quinta","band":"02:30 - 03:00","revenue":7.9208,"transactions":1,"dates":["2026-04-02"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":4621.6041,"transactions":252,"dates":["2026-04-03","2026-04-10","2026-04-17","2026-04-24"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":5085.1364,"transactions":265,"dates":["2026-04-03","2026-04-10","2026-04-17","2026-04-24"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":3546.5883,"transactions":174,"dates":["2026-04-03","2026-04-10","2026-04-17","2026-04-24"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":2199.4716,"transactions":120,"dates":["2026-04-03","2026-04-10","2026-04-17","2026-04-24"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":1158.9049,"transactions":67,"dates":["2026-04-03","2026-04-10","2026-04-17","2026-04-24"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":250.0319,"transactions":13,"dates":["2026-04-03"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":7544.5511,"transactions":385,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":7757.5434,"transactions":398,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":6561.3241,"transactions":366,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":6160.7265,"transactions":326,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":4683.7096,"transactions":253,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":3015.2995,"transactions":165,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":935.173,"transactions":52,"dates":["2026-04-04","2026-04-11","2026-04-18","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":5,"weekdayLabel":"Sábado","band":"03:30 - 04:00","revenue":53.4654,"transactions":2,"dates":["2026-04-11","2026-04-25"]},{"month":"2026-04","monthLabel":"Abr/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":236.46,"transactions":10,"dates":["2026-04-19","2026-04-26"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":1,"weekdayLabel":"Terça","band":"00:00 - 00:30","revenue":338.426,"transactions":14,"dates":["2026-05-12","2026-05-19","2026-05-26"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":2,"weekdayLabel":"Quarta","band":"00:00 - 00:30","revenue":121.3288,"transactions":7,"dates":["2026-05-06","2026-05-13","2026-05-27"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":338.3006,"transactions":13,"dates":["2026-05-07","2026-05-14","2026-05-21"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":3,"weekdayLabel":"Quinta","band":"00:30 - 01:00","revenue":11.856,"transactions":1,"dates":["2026-05-14"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":4040.7649,"transactions":204,"dates":["2026-05-01","2026-05-08","2026-05-15","2026-05-22","2026-05-29"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":4107.002,"transactions":205,"dates":["2026-05-01","2026-05-08","2026-05-15","2026-05-22","2026-05-29"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":2893.0811,"transactions":164,"dates":["2026-05-01","2026-05-08","2026-05-15","2026-05-22","2026-05-29"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":2309.8591,"transactions":130,"dates":["2026-05-01","2026-05-08","2026-05-22","2026-05-29"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":735.7467,"transactions":43,"dates":["2026-05-01","2026-05-08","2026-05-22","2026-05-29"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":46.436,"transactions":4,"dates":["2026-05-01"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":5562.8979,"transactions":304,"dates":["2026-05-02","2026-05-09","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":5690.8328,"transactions":276,"dates":["2026-05-02","2026-05-09","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":4782.3768,"transactions":248,"dates":["2026-05-02","2026-05-09","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":4425.885,"transactions":220,"dates":["2026-05-02","2026-05-09","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":2900.095,"transactions":166,"dates":["2026-05-02","2026-05-09","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":1873.0106,"transactions":107,"dates":["2026-05-02","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":465.5564,"transactions":32,"dates":["2026-05-02","2026-05-16","2026-05-23","2026-05-30"]},{"month":"2026-05","monthLabel":"Mai/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":12.844,"transactions":1,"dates":["2026-05-03"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":1,"weekdayLabel":"Terça","band":"00:00 - 00:30","revenue":92.524,"transactions":4,"dates":["2026-06-09","2026-06-23"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":2,"weekdayLabel":"Quarta","band":"00:00 - 00:30","revenue":1783.3801,"transactions":96,"dates":["2026-06-03","2026-06-24"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":2,"weekdayLabel":"Quarta","band":"00:30 - 01:00","revenue":745.9161,"transactions":40,"dates":["2026-06-03","2026-06-24"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":2,"weekdayLabel":"Quarta","band":"01:00 - 01:30","revenue":550.905,"transactions":31,"dates":["2026-06-03","2026-06-24"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":2,"weekdayLabel":"Quarta","band":"01:30 - 02:00","revenue":27.706,"transactions":2,"dates":["2026-06-03"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":566.2464,"transactions":29,"dates":["2026-06-04","2026-06-18","2026-06-25"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":3,"weekdayLabel":"Quinta","band":"00:30 - 01:00","revenue":216.5574,"transactions":11,"dates":["2026-06-04"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":5799.7479,"transactions":288,"dates":["2026-06-05","2026-06-12","2026-06-19","2026-06-26"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":5852.7098,"transactions":308,"dates":["2026-06-05","2026-06-12","2026-06-19","2026-06-26"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":4565.8892,"transactions":235,"dates":["2026-06-05","2026-06-12","2026-06-19","2026-06-26"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":2901.8714,"transactions":149,"dates":["2026-06-05","2026-06-12","2026-06-19","2026-06-26"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":2105.488,"transactions":114,"dates":["2026-06-05","2026-06-12","2026-06-19"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"02:30 - 03:00","revenue":911.003,"transactions":53,"dates":["2026-06-19"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":4,"weekdayLabel":"Sexta","band":"03:00 - 03:30","revenue":731.7424,"transactions":45,"dates":["2026-06-19"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":5781.7995,"transactions":299,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":6596.8141,"transactions":336,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":6062.3062,"transactions":311,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":4783.4541,"transactions":236,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":4403.3255,"transactions":222,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":2095.8503,"transactions":114,"dates":["2026-06-06","2026-06-13","2026-06-20","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":811.2189,"transactions":43,"dates":["2026-06-06","2026-06-13","2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":5,"weekdayLabel":"Sábado","band":"03:30 - 04:00","revenue":36.6085,"transactions":3,"dates":["2026-06-27"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":390.8702,"transactions":22,"dates":["2026-06-14","2026-06-28"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":6,"weekdayLabel":"Domingo","band":"00:30 - 01:00","revenue":129.2092,"transactions":7,"dates":["2026-06-14"]},{"month":"2026-06","monthLabel":"Jun/26","weekday":6,"weekdayLabel":"Domingo","band":"01:00 - 01:30","revenue":21.2872,"transactions":1,"dates":["2026-06-14"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"00:00 - 00:30","revenue":745.6349,"transactions":36,"dates":["2026-07-07","2026-07-21","2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"00:30 - 01:00","revenue":1356.6251,"transactions":70,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"01:00 - 01:30","revenue":1913.033,"transactions":93,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"01:30 - 02:00","revenue":2305.1779,"transactions":108,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"02:00 - 02:30","revenue":1828.9252,"transactions":100,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"02:30 - 03:00","revenue":1403.3506,"transactions":80,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":1,"weekdayLabel":"Terça","band":"03:00 - 03:30","revenue":414.082,"transactions":26,"dates":["2026-07-28"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":2,"weekdayLabel":"Quarta","band":"00:00 - 00:30","revenue":61.5932,"transactions":4,"dates":["2026-07-15","2026-07-29"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":3,"weekdayLabel":"Quinta","band":"00:00 - 00:30","revenue":127.494,"transactions":7,"dates":["2026-07-02","2026-07-16"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":4,"weekdayLabel":"Sexta","band":"00:00 - 00:30","revenue":2884.2709,"transactions":142,"dates":["2026-07-03","2026-07-10","2026-07-17","2026-07-24"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":4,"weekdayLabel":"Sexta","band":"00:30 - 01:00","revenue":2766.7146,"transactions":142,"dates":["2026-07-03","2026-07-10","2026-07-17","2026-07-24"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":4,"weekdayLabel":"Sexta","band":"01:00 - 01:30","revenue":1690.2396,"transactions":88,"dates":["2026-07-03","2026-07-10","2026-07-17","2026-07-24"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":4,"weekdayLabel":"Sexta","band":"01:30 - 02:00","revenue":691.4125,"transactions":35,"dates":["2026-07-03","2026-07-10","2026-07-17","2026-07-24"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":4,"weekdayLabel":"Sexta","band":"02:00 - 02:30","revenue":194.8442,"transactions":11,"dates":["2026-07-03","2026-07-17"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"00:00 - 00:30","revenue":6498.6663,"transactions":325,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"00:30 - 01:00","revenue":6651.652,"transactions":329,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"01:00 - 01:30","revenue":7752.2099,"transactions":385,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"01:30 - 02:00","revenue":5743.873,"transactions":299,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"02:00 - 02:30","revenue":4287.6044,"transactions":226,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"02:30 - 03:00","revenue":2803.8951,"transactions":158,"dates":["2026-07-04","2026-07-11","2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":5,"weekdayLabel":"Sábado","band":"03:00 - 03:30","revenue":1039.811,"transactions":60,"dates":["2026-07-18","2026-07-25"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":6,"weekdayLabel":"Domingo","band":"00:00 - 00:30","revenue":942.2582,"transactions":50,"dates":["2026-07-05","2026-07-12"]},{"month":"2026-07","monthLabel":"Jul/26","weekday":6,"weekdayLabel":"Domingo","band":"00:30 - 01:00","revenue":93.3056,"transactions":8,"dates":["2026-07-05"]}],"bins":["00:00 - 00:30","00:30 - 01:00","01:00 - 01:30","01:30 - 02:00","02:00 - 02:30","02:30 - 03:00","03:00 - 03:30","03:30 - 04:00","04:00 - 04:30","04:30 - 05:00"],"weekdays":["Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"],"months":[{"key":"2026-01","label":"Jan/26"},{"key":"2026-02","label":"Fev/26"},{"key":"2026-03","label":"Mar/26"},{"key":"2026-04","label":"Abr/26"},{"key":"2026-05","label":"Mai/26"},{"key":"2026-06","label":"Jun/26"},{"key":"2026-07","label":"Jul/26"}],"meta":{"sourceRows":73426,"nightRows":18190,"sourceMinDate":"02/01/2026","sourceMaxDate":"31/07/2026","totalRevenue":348156.59,"totalTransactions":18190,"operationalDates":114}};
+const money = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
+const integer = new Intl.NumberFormat('pt-BR');
+
+const $ = id => document.getElementById(id);
+const metricF = $('metricFilter');
+const marginRateF = $('marginRate');
+const selectedMonths = new Set();
+const selectedWeekdays = new Set();
+const selectedBands = new Set();
+
+function populateFilters(){
+  const monthMenu = $('monthMenu');
+  const weekdayMenu = $('weekdayMenu');
+
+  monthMenu.innerHTML =
+    '<div class="multi-actions"><button type="button" id="monthAll">Todos</button><button type="button" id="monthClear">Limpar</button></div>' +
+    DB.months.map(m=>`<label class="multi-option"><input type="checkbox" value="${m.key}"><span>${m.label}</span></label>`).join('');
+
+  weekdayMenu.innerHTML =
+    '<div class="multi-actions"><button type="button" id="weekdayAll">Todos</button><button type="button" id="weekdayClear">Limpar</button></div>' +
+    DB.weekdays.map((d,i)=>`<label class="multi-option"><input type="checkbox" value="${i}"><span>${d}</span></label>`).join('');
+
+  const bandMenu = $('bandMenu');
+  bandMenu.innerHTML =
+    '<div class="multi-actions"><button type="button" id="bandAll">Todas</button><button type="button" id="bandClear">Limpar</button></div>' +
+    DB.bins.map(b=>`<label class="multi-option"><input type="checkbox" value="${b}"><span>${b}</span></label>`).join('');
+
+  const updateMonthButton = () => {
+    if(selectedMonths.size===0) $('monthBtn').textContent='Todos os meses';
+    else if(selectedMonths.size===1){
+      const k=[...selectedMonths][0];
+      $('monthBtn').textContent=(DB.months.find(m=>m.key===k)||{}).label || k;
+    } else $('monthBtn').textContent=`${selectedMonths.size} meses selecionados`;
+  };
+
+  const updateWeekdayButton = () => {
+    if(selectedWeekdays.size===0) $('weekdayBtn').textContent='Todos os dias';
+    else if(selectedWeekdays.size===1) $('weekdayBtn').textContent=DB.weekdays[[...selectedWeekdays][0]];
+    else $('weekdayBtn').textContent=`${selectedWeekdays.size} dias selecionados`;
+  };
+
+  const updateBandButton = () => {
+    if(selectedBands.size===0) $('bandBtn').textContent='Todas as faixas';
+    else if(selectedBands.size===1) $('bandBtn').textContent=[...selectedBands][0];
+    else $('bandBtn').textContent=`${selectedBands.size} faixas selecionadas`;
+  };
+
+  monthMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      cb.checked ? selectedMonths.add(cb.value) : selectedMonths.delete(cb.value);
+      updateMonthButton(); renderAll();
+    });
+  });
+
+  weekdayMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      const v=Number(cb.value);
+      cb.checked ? selectedWeekdays.add(v) : selectedWeekdays.delete(v);
+      updateWeekdayButton(); renderAll();
+    });
+  });
+
+  bandMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>{
+    cb.addEventListener('change',()=>{
+      cb.checked ? selectedBands.add(cb.value) : selectedBands.delete(cb.value);
+      updateBandButton(); renderAll();
+    });
+  });
+
+  $('monthAll').addEventListener('click',()=>{
+    selectedMonths.clear();
+    monthMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateMonthButton(); renderAll();
+  });
+  $('monthClear').addEventListener('click',()=>{
+    selectedMonths.clear();
+    monthMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateMonthButton(); renderAll();
+  });
+
+  $('weekdayAll').addEventListener('click',()=>{
+    selectedWeekdays.clear();
+    weekdayMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateWeekdayButton(); renderAll();
+  });
+  $('weekdayClear').addEventListener('click',()=>{
+    selectedWeekdays.clear();
+    weekdayMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateWeekdayButton(); renderAll();
+  });
+
+  $('bandAll').addEventListener('click',()=>{
+    selectedBands.clear();
+    bandMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateBandButton(); renderAll();
+  });
+  $('bandClear').addEventListener('click',()=>{
+    selectedBands.clear();
+    bandMenu.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+    updateBandButton(); renderAll();
+  });
+
+  $('monthBtn').addEventListener('click',()=>$('monthMulti').classList.toggle('open'));
+  $('weekdayBtn').addEventListener('click',()=>$('weekdayMulti').classList.toggle('open'));
+  $('bandBtn').addEventListener('click',()=>$('bandMulti').classList.toggle('open'));
+
+  document.addEventListener('click',e=>{
+    if(!$('monthMulti').contains(e.target)) $('monthMulti').classList.remove('open');
+    if(!$('weekdayMulti').contains(e.target)) $('weekdayMulti').classList.remove('open');
+    if(!$('bandMulti').contains(e.target)) $('bandMulti').classList.remove('open');
+  });
+}
+
+function selectedRecords(ignore={}){
+  return DB.records.filter(r =>
+    (ignore.month || selectedMonths.size===0 || selectedMonths.has(r.month)) &&
+    (ignore.weekday || selectedWeekdays.size===0 || selectedWeekdays.has(r.weekday)) &&
+    (ignore.band || selectedBands.size===0 || selectedBands.has(r.band))
+  );
+}
+
+function unionDates(records){
+  const s=new Set();
+  records.forEach(r=>r.dates.forEach(d=>s.add(d)));
+  return s;
+}
+
+function sum(records,key='revenue'){ return records.reduce((a,r)=>a+(r[key]||0),0); }
+
+function marginRate(){
+  const value=Number(marginRateF.value);
+  return Number.isFinite(value) ? Math.min(100,Math.max(0,value)) : 0;
+}
+
+function selectedMonthCount(){ return selectedMonths.size || DB.months.length; }
+
+function group(records,key){
+  const m=new Map();
+  records.forEach(r=>{
+    const k=r[key];
+    if(!m.has(k)) m.set(k,{revenue:0,transactions:0,dates:new Set(),label: key==='weekday'?r.weekdayLabel:(key==='month'?r.monthLabel:k)});
+    const x=m.get(k); x.revenue+=r.revenue; x.transactions+=r.transactions; r.dates.forEach(d=>x.dates.add(d));
+  });
+  return m;
+}
+
+function metricValue(item){
+  if(metricF.value==='avgday') return item.dates.size ? item.revenue/item.dates.size : 0;
+  return item.revenue;
+}
+
+function shortMoney(v){
+  if(Math.abs(v)>=1000000) return 'R$ '+(v/1000000).toFixed(1).replace('.',',')+' mi';
+  if(Math.abs(v)>=1000) return 'R$ '+(v/1000).toFixed(1).replace('.',',')+' mil';
+  return money.format(v);
+}
+
+function renderKpis(){
+  const rec=selectedRecords();
+  const revenue=sum(rec), tx=sum(rec,'transactions'), days=unionDates(rec);
+  const avg=days.size?revenue/days.size:0;
+  $('kpiRevenue').textContent=money.format(revenue);
+  $('kpiRevenueHint').textContent=`${days.size} dias operacionais no filtro`;
+  $('kpiAvgDay').textContent=money.format(avg);
+  $('kpiDays').textContent=days.size?`Base: ${days.size} dias com movimento`:'Sem movimento';
+  $('kpiTx').textContent=integer.format(tx);
+
+  const bandRec=selectedRecords({band:true});
+  const bg=group(bandRec,'band');
+  let bestBand=null;
+  for(const [k,v] of bg) if(!bestBand || v.revenue>bestBand[1].revenue) bestBand=[k,v];
+  $('kpiBestBand').textContent=bestBand?bestBand[0].split(' - ')[0]:'—';
+  $('kpiBestBandHint').textContent=bestBand?`${bestBand[0]} · ${money.format(bestBand[1].revenue)}`:'Sem dados';
+
+  const wdRec=selectedRecords({weekday:true});
+  const wg=group(wdRec,'weekday');
+  let bestWd=null;
+  for(const [k,v] of wg) if(!bestWd || v.revenue>bestWd[1].revenue) bestWd=[k,v];
+  $('kpiBestWd').textContent=bestWd?DB.weekdays[bestWd[0]]:'—';
+  $('kpiBestWdHint').textContent=bestWd?money.format(bestWd[1].revenue):'Sem dados';
+}
+
+function renderMarginImpact(){
+  const revenue=sum(selectedRecords());
+  const rate=marginRate()/100;
+  const months=selectedMonthCount();
+  const variableCost=revenue*(1-rate);
+  const margin=revenue*rate;
+
+  $('marginRateDisplay').textContent=`${(rate*100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}%`;
+  $('variableCostImpact').textContent=money.format(variableCost);
+  $('variableCostHint').textContent=`Projeção no período filtrado · ${money.format(variableCost/months)} por mês`;
+  $('marginImpact').textContent=money.format(margin);
+  $('marginImpactHint').textContent=`Projeção no período filtrado · ${money.format(margin/months)} por mês`;
+}
+
+function renderBarChart(container, orderedKeys, grouped, labelFn){
+  const vals=orderedKeys.map(k=>grouped.get(k)||{revenue:0,transactions:0,dates:new Set()});
+  const metrics=vals.map(metricValue);
+  const max=Math.max(...metrics,1);
+  container.innerHTML=orderedKeys.map((k,i)=>{
+    const val=metrics[i];
+    const h=Math.max(2,(val/max)*210);
+    return `<div class="barcol">
+      <div class="barvalue">${val?shortMoney(val):'—'}</div>
+      <div class="bar" style="height:${h}px" title="${labelFn(k)}: ${money.format(val)}"></div>
+      <div class="barlabel">${labelFn(k)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCharts(){
+  const visibleBins=selectedBands.size ? DB.bins.filter(b=>selectedBands.has(b)) : DB.bins;
+  const byBand=group(selectedRecords(),'band');
+  renderBarChart($('bandChart'),visibleBins,byBand,k=>k.replace(' - ','–'));
+
+  const visibleWeekdays=selectedWeekdays.size ? [...selectedWeekdays].sort((a,b)=>a-b) : [0,1,2,3,4,5,6];
+  const byWd=group(selectedRecords(),'weekday');
+  renderBarChart($('weekdayChart'),visibleWeekdays,byWd,k=>DB.weekdays[k].slice(0,3));
+}
+
+function heatColor(value,max){
+  if(!value) return 'transparent';
+  const a=0.10 + 0.55*(value/max);
+  const rgb=document.documentElement.dataset.theme==='light'?'21,140,125':'51,201,184';
+  return `rgba(${rgb},${a.toFixed(3)})`;
+}
+
+function renderHeat(){
+  let months = selectedMonths.size ? DB.months.filter(m=>selectedMonths.has(m.key)) : DB.months;
+  let source=selectedRecords({month:true});
+  if(selectedMonths.size) source=source.filter(r=>selectedMonths.has(r.month));
+
+  const map=new Map();
+  source.forEach(r=>{
+    const key=r.month+'|'+r.band;
+    if(!map.has(key)) map.set(key,{revenue:0,dates:new Set()});
+    const x=map.get(key); x.revenue+=r.revenue; r.dates.forEach(d=>x.dates.add(d));
+  });
+
+  const shownBins=selectedBands.size ? DB.bins.filter(b=>selectedBands.has(b)) : DB.bins;
+  const values=[];
+  months.forEach(m=>shownBins.forEach(b=>{
+    const x=map.get(m.key+'|'+b)||{revenue:0,dates:new Set()};
+    values.push(x.revenue);
+  }));
+  const max=Math.max(...values,1);
+  const sumByBand=Object.fromEntries(shownBins.map(b=>[b,0]));
+  let periodTotal=0;
+
+  months.forEach(m=>shownBins.forEach(b=>{
+    const x=map.get(m.key+'|'+b)||{revenue:0,dates:new Set()};
+    const v=x.revenue;
+    sumByBand[b]+=v;
+    periodTotal+=v;
+  }));
+  const monthCount=Math.max(months.length,1);
+  const sumCells=shownBins.map(b=>`<td>${shortMoney(sumByBand[b])}</td>`).join('');
+  const averageCells=shownBins.map(b=>`<td>${shortMoney(sumByBand[b]/monthCount)}</td>`).join('');
+  const rate=marginRate()/100;
+  const variableCostCells=shownBins.map(b=>`<td>${money.format(sumByBand[b]/monthCount*(1-rate))}</td>`).join('');
+  const contributionCells=shownBins.map(b=>`<td>${money.format(sumByBand[b]/monthCount*rate)}</td>`).join('');
+  const monthlyAverage=periodTotal/monthCount;
+
+  $('heatTable').innerHTML =
+    '<thead><tr><th>Mês</th>'+shownBins.map(b=>`<th>${b.replace(' - ','–')}</th>`).join('')+'<th>Total</th></tr></thead>'+
+    '<tbody>'+months.map(m=>{
+      let total=0;
+      const cells=shownBins.map(b=>{
+        const x=map.get(m.key+'|'+b)||{revenue:0,dates:new Set()};
+        const v=metricValue(x); total+=v;
+        return `<td class="heatcell" style="background:${heatColor(v,max)}">${v?shortMoney(v):'—'}</td>`;
+      }).join('');
+      return `<tr><td class="rowlabel">${m.label}</td>${cells}<td><strong>${shortMoney(total)}</strong></td></tr>`;
+    }).join('')+'</tbody>'+
+    `<tfoot>
+      <tr><td class="summary-label">Soma no período</td>${sumCells}<td>${shortMoney(periodTotal)}</td></tr>
+      <tr><td class="summary-label">Receita líquida média/mês (${months.length} ${months.length===1?'mês':'meses'})</td>${averageCells}<td>${shortMoney(monthlyAverage)}</td></tr>
+      <tr><td class="summary-label">Custo variável projetado evitado</td>${variableCostCells}<td>${money.format(monthlyAverage*(1-rate))}</td></tr>
+      <tr><td class="summary-label">Saldo a deixar de ganhar</td>${contributionCells}<td>${money.format(monthlyAverage*rate)}</td></tr>
+    </tfoot>`;
+}
+
+
+function parseBRDate(s){
+  const [d,m,y]=s.split('/').map(Number);
+  return new Date(y,m-1,d,12,0,0);
+}
+function isoDate(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function addDays(d,n){
+  const x=new Date(d.getTime()); x.setDate(x.getDate()+n); return x;
+}
+function operationalCoverage(){
+  // A madrugada civil da primeira/última data pertence ao dia operacional anterior.
+  return {
+    start:addDays(parseBRDate(DB.meta.sourceMinDate),-1),
+    end:addDays(parseBRDate(DB.meta.sourceMaxDate),-1)
+  };
+}
+function monthSelected(key){
+  return selectedMonths.size===0 || selectedMonths.has(key);
+}
+function calendarCountsByMonthWeekday(){
+  const cov=operationalCoverage();
+  const counts=new Map();
+  for(let d=new Date(cov.start.getTime()); d<=cov.end; d=addDays(d,1)){
+    const month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if(!monthSelected(month)) continue;
+    const weekday=(d.getDay()+6)%7;
+    const key=`${month}|${weekday}`;
+    counts.set(key,(counts.get(key)||0)+1);
+  }
+  return counts;
+}
+function renderDetail(){
+  const rec=selectedRecords();
+  const total=sum(rec);
+  const byKey=new Map(rec.map(r=>[`${r.month}|${r.weekday}|${r.band}`,r]));
+  const months=selectedMonths.size ? DB.months.filter(m=>selectedMonths.has(m.key)) : DB.months;
+  const weekdays=selectedWeekdays.size ? [...selectedWeekdays].sort((a,b)=>a-b) : [0,1,2,3,4,5,6];
+  const bands=selectedBands.size ? DB.bins.filter(b=>selectedBands.has(b)) : DB.bins;
+  const counts=calendarCountsByMonthWeekday();
+  const rows=[];
+
+  months.forEach(month=>weekdays.forEach(weekday=>bands.forEach(band=>{
+    const existing=byKey.get(`${month.key}|${weekday}|${band}`);
+    // Com dia selecionado, mantém também os períodos sem venda para explicar o zero.
+    if(existing || selectedWeekdays.size){
+      rows.push(existing || {
+        month:month.key, monthLabel:month.label, weekday, weekdayLabel:DB.weekdays[weekday],
+        band, revenue:0, transactions:0, dates:[]
+      });
+    }
+  })));
+
+  $('detailTable').innerHTML=`<thead><tr>
+    <th>Mês</th><th>Dia operacional</th><th>Faixa</th><th>Faturamento</th><th>Ocorrências</th><th>Média/ocorrência</th><th>Lançamentos</th><th>% do filtro</th>
+  </tr></thead><tbody>`+
+  (rows.length?rows.map(r=>{
+    const occurrences=counts.get(`${r.month}|${r.weekday}`)||0;
+    const avg=occurrences?r.revenue/occurrences:0;
+    const share=total?r.revenue/total*100:0;
+    return `<tr>
+      <td>${r.monthLabel}</td><td>${r.weekdayLabel}</td><td>${r.band}</td>
+      <td class="good"><strong>${money.format(r.revenue)}</strong></td>
+      <td>${integer.format(occurrences)}</td><td>${money.format(avg)}</td><td>${integer.format(r.transactions)}</td><td>${share.toFixed(1).replace('.',',')}%</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="8" class="empty">Sem dados para os filtros escolhidos.</td></tr>`)+
+  '</tbody>';
+}
+
+function renderAll(){
+  renderKpis(); renderMarginImpact(); renderCharts(); renderHeat(); renderDetail();
+}
+
+function exportCSV(){
+  const rec=selectedRecords();
+  const total=sum(rec);
+  const lines=[['Mês operacional','Dia da semana','Faixa','Faturamento líquido','Média por dia','Lançamentos','% do filtro']];
+  rec.forEach(r=>lines.push([r.monthLabel,r.weekdayLabel,r.band,r.revenue.toFixed(2),(r.dates.length?r.revenue/r.dates.length:0).toFixed(2),r.transactions,(total?r.revenue/total*100:0).toFixed(2)]));
+  const csv='\ufeff'+lines.map(row=>row.map(v=>`"${String(v).replaceAll('"','""')}"`).join(';')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='resumo_faturamento_madrugada.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+$('csvBtn').addEventListener('click',exportCSV);
+metricF.addEventListener('change',renderAll);
+const savedMarginRate=Number(localStorage.getItem('madrugada-margin-rate'));
+if(Number.isFinite(savedMarginRate) && savedMarginRate>=0 && savedMarginRate<=100) marginRateF.value=savedMarginRate;
+marginRateF.addEventListener('input',()=>{
+  localStorage.setItem('madrugada-margin-rate',marginRate());
+  renderAll();
+});
+
+function setTheme(theme){
+  document.documentElement.dataset.theme=theme;
+  localStorage.setItem('madrugada-theme',theme);
+  $('themeBtn').textContent=theme==='dark'?'Modo claro':'Modo dark';
+}
+$('themeBtn').addEventListener('click',()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark'));
+setTheme(localStorage.getItem('madrugada-theme')||'dark');
+
+populateFilters();
+renderAll();
+$('footerMeta').textContent=`Base: ${DB.meta.sourceMinDate} a ${DB.meta.sourceMaxDate} · ${integer.format(DB.meta.nightRows)} lançamentos entre 00:00 e 05:00 · regra operacional aplicada ao dia anterior`;
+</script>
+</body>
+</html>
