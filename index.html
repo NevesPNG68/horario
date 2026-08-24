@@ -152,7 +152,17 @@ td{font-size:13px}
 .multi-actions button{flex:1;padding:8px 10px;font-size:11px}
 
 @media(max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}.grid2,.decision-panel{grid-template-columns:1fr}.filters{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:680px){.app{padding:12px}.hero{padding:18px;align-items:flex-start;flex-direction:column}.cards,.decision-metrics{grid-template-columns:1fr}.filters{grid-template-columns:1fr}.chart{height:240px;gap:5px}.barlabel{font-size:9px}}
+@media(max-width:680px){
+  .app{padding:12px}
+  .hero{padding:18px;align-items:flex-start;flex-direction:column}
+  .cards,.decision-metrics{grid-template-columns:1fr}
+  .filters{grid-template-columns:1fr}
+  .card,.decision-metric{min-height:132px;padding:18px 20px;border-radius:var(--radius)}
+  .decision-metric{display:flex;flex-direction:column}
+  .decision-metric small{margin-top:auto}
+  .chart{height:240px;gap:5px}
+  .barlabel{font-size:9px}
+}
 @media print{.actions,.filters{display:none!important}body{background:#fff}.app{padding:0}.panel,.card,.hero{box-shadow:none;break-inside:avoid}}
 </style>
 </head>
