@@ -154,6 +154,9 @@ td{font-size:13px}
 .product-table th:nth-child(2),.product-table td:nth-child(2),.product-table th:nth-child(3),.product-table td:nth-child(3),.product-table th:nth-child(4),.product-table td:nth-child(4){text-align:right}
 .product-table td:nth-child(2),.product-table td:nth-child(3),.product-table td:nth-child(4){font-variant-numeric:tabular-nums}
 .product-table td:nth-child(3){color:var(--green);font-weight:900}
+.product-table tfoot td{font-weight:900;background:var(--surface2);border-top:1px solid var(--line)}
+.product-table tfoot td:first-child{text-transform:uppercase;font-size:11px;letter-spacing:.05em}
+.product-table tfoot td:nth-child(3),.product-table tfoot td:nth-child(4){color:var(--green)}
 .empty{color:var(--muted);text-align:center;padding:30px}
 .footer{color:var(--muted);font-size:11px;margin:18px 2px 4px;text-align:right}
 
@@ -290,7 +293,7 @@ td{font-size:13px}
     <div class="product-summary" aria-label="Totais de produtos filtrados">
       <div class="product-summary-item"><span>Produtos vendidos</span><strong id="productCount">—</strong></div>
       <div class="product-summary-item"><span>Quantidade</span><strong id="productQuantity">—</strong></div>
-      <div class="product-summary-item"><span>Faturamento líquido</span><strong id="productValue">—</strong><small class="product-summary-detail">Média/mês: <b id="productMonthlyAverage">—</b></small></div>
+      <div class="product-summary-item"><span id="productValueLabel">Faturamento líquido</span><strong id="productValue">—</strong><small class="product-summary-detail">Média/mês: <b id="productMonthlyAverage">—</b></small></div>
     </div>
     <div class="table-wrap"><table class="product-table" id="productTable"></table></div>
   </section>
@@ -650,6 +653,7 @@ function renderProducts(){
 
   $('productCount').textContent=integer.format(uniqueProducts);
   $('productQuantity').textContent=quantity.format(totalQuantity);
+  $('productValueLabel').textContent=selectedGroups.size===0 ? 'Faturamento líquido' : `Total ${selectedGroups.size===1 ? 'do grupo selecionado' : 'dos grupos selecionados'}`;
   $('productValue').textContent=money.format(totalValue);
   $('productMonthlyAverage').textContent=money.format(monthlyAverage);
   $('productTable').innerHTML=`<thead><tr>
@@ -658,7 +662,9 @@ function renderProducts(){
   (rows.length?rows.map(row=>`<tr>
     <td>${escapeHtml(row.product)}</td><td>${quantity.format(row.quantity)}</td><td>${money.format(row.value)}</td><td>${money.format(activeMonths ? row.value/activeMonths : 0)}</td><td>${escapeHtml(row.group)}</td>
   </tr>`).join(''):`<tr><td colspan="5" class="empty">Sem produtos para os filtros escolhidos.</td></tr>`)+
-  '</tbody>';
+  `</tbody><tfoot><tr>
+    <td>Total selecionado</td><td>${quantity.format(totalQuantity)}</td><td>${money.format(totalValue)}</td><td>${money.format(monthlyAverage)}</td><td>—</td>
+  </tr></tfoot>`;
 }
 
 function renderAll(){
