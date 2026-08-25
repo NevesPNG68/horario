@@ -147,10 +147,12 @@ td{font-size:13px}
 .product-summary-item{padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface2)}
 .product-summary-item span{display:block;color:var(--muted);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
 .product-summary-item strong{display:block;margin-top:5px;font-family:var(--font-display);font-size:18px;letter-spacing:-.02em}
-.product-table{min-width:680px}
+.product-summary-detail{display:block;margin-top:6px;color:var(--muted);font-size:11px;font-weight:800}
+.product-summary-detail b{color:var(--text);font-variant-numeric:tabular-nums}
+.product-table{min-width:780px}
 .product-table th:first-child,.product-table td:first-child,.product-table th:last-child,.product-table td:last-child{text-align:left}
-.product-table th:nth-child(2),.product-table td:nth-child(2),.product-table th:nth-child(3),.product-table td:nth-child(3){text-align:right}
-.product-table td:nth-child(2),.product-table td:nth-child(3){font-variant-numeric:tabular-nums}
+.product-table th:nth-child(2),.product-table td:nth-child(2),.product-table th:nth-child(3),.product-table td:nth-child(3),.product-table th:nth-child(4),.product-table td:nth-child(4){text-align:right}
+.product-table td:nth-child(2),.product-table td:nth-child(3),.product-table td:nth-child(4){font-variant-numeric:tabular-nums}
 .product-table td:nth-child(3){color:var(--green);font-weight:900}
 .empty{color:var(--muted);text-align:center;padding:30px}
 .footer{color:var(--muted);font-size:11px;margin:18px 2px 4px;text-align:right}
@@ -288,7 +290,7 @@ td{font-size:13px}
     <div class="product-summary" aria-label="Totais de produtos filtrados">
       <div class="product-summary-item"><span>Produtos vendidos</span><strong id="productCount">—</strong></div>
       <div class="product-summary-item"><span>Quantidade</span><strong id="productQuantity">—</strong></div>
-      <div class="product-summary-item"><span>Faturamento líquido</span><strong id="productValue">—</strong></div>
+      <div class="product-summary-item"><span>Faturamento líquido</span><strong id="productValue">—</strong><small class="product-summary-detail">Média/mês: <b id="productMonthlyAverage">—</b></small></div>
     </div>
     <div class="table-wrap"><table class="product-table" id="productTable"></table></div>
   </section>
@@ -643,16 +645,19 @@ function renderProducts(){
   const totalQuantity=rows.reduce((total,row)=>total+row.quantity,0);
   const totalValue=rows.reduce((total,row)=>total+row.value,0);
   const uniqueProducts=new Set(rows.map(row=>row.product)).size;
+  const activeMonths=new Set(selectedRecords().map(record=>record.month)).size;
+  const monthlyAverage=activeMonths ? totalValue/activeMonths : 0;
 
   $('productCount').textContent=integer.format(uniqueProducts);
   $('productQuantity').textContent=quantity.format(totalQuantity);
   $('productValue').textContent=money.format(totalValue);
+  $('productMonthlyAverage').textContent=money.format(monthlyAverage);
   $('productTable').innerHTML=`<thead><tr>
-    <th>Produto</th><th>Quantidade</th><th>Líquido</th><th>Grupo</th>
+    <th>Produto</th><th>Quantidade</th><th>Líquido</th><th>Média/mês</th><th>Grupo</th>
   </tr></thead><tbody>`+
   (rows.length?rows.map(row=>`<tr>
-    <td>${escapeHtml(row.product)}</td><td>${quantity.format(row.quantity)}</td><td>${money.format(row.value)}</td><td>${escapeHtml(row.group)}</td>
-  </tr>`).join(''):`<tr><td colspan="4" class="empty">Sem produtos para os filtros escolhidos.</td></tr>`)+
+    <td>${escapeHtml(row.product)}</td><td>${quantity.format(row.quantity)}</td><td>${money.format(row.value)}</td><td>${money.format(activeMonths ? row.value/activeMonths : 0)}</td><td>${escapeHtml(row.group)}</td>
+  </tr>`).join(''):`<tr><td colspan="5" class="empty">Sem produtos para os filtros escolhidos.</td></tr>`)+
   '</tbody>';
 }
 
