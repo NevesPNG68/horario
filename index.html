@@ -293,7 +293,7 @@ td{font-size:13px}
     <div class="product-summary" aria-label="Totais de produtos filtrados">
       <div class="product-summary-item"><span>Produtos vendidos</span><strong id="productCount">—</strong></div>
       <div class="product-summary-item"><span>Quantidade</span><strong id="productQuantity">—</strong></div>
-      <div class="product-summary-item"><span id="productValueLabel">Faturamento líquido</span><strong id="productValue">—</strong><small class="product-summary-detail">Média/mês: <b id="productMonthlyAverage">—</b></small></div>
+      <div class="product-summary-item"><span id="productValueLabel">Faturamento líquido</span><strong id="productValue">—</strong><small class="product-summary-detail">Média/mês: <b id="productMonthlyAverage">—</b> · Participação: <b id="productParticipation">—</b></small></div>
     </div>
     <div class="table-wrap"><table class="product-table" id="productTable"></table></div>
   </section>
@@ -310,6 +310,7 @@ const DB = {"records":[{"month":"2026-01","monthLabel":"Jan/26","weekday":1,"wee
 const money = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2});
 const integer = new Intl.NumberFormat('pt-BR');
 const quantity = new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
+const percent = new Intl.NumberFormat('pt-BR',{style:'percent',minimumFractionDigits:1,maximumFractionDigits:1});
 
 const $ = id => document.getElementById(id);
 const escapeHtml = value => String(value).replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
@@ -462,11 +463,17 @@ function selectedRecords(ignore={}){
   );
 }
 
-function selectedProductRecords(){
-  return DB.products.filter(r =>
+function matchesProductMainFilters(r){
+  return (
     (selectedMonths.size===0 || selectedMonths.has(r.month)) &&
     (selectedWeekdays.size===0 || selectedWeekdays.has(r.weekday)) &&
-    (selectedBands.size===0 || selectedBands.has(r.band)) &&
+    (selectedBands.size===0 || selectedBands.has(r.band))
+  );
+}
+
+function selectedProductRecords(){
+  return DB.products.filter(r =>
+    matchesProductMainFilters(r) &&
     (selectedGroups.size===0 || selectedGroups.has(r.group))
   );
 }
@@ -647,6 +654,7 @@ function renderProducts(){
   const rows=[...grouped.values()].sort((a,b)=>b.value-a.value || a.product.localeCompare(b.product,'pt-BR'));
   const totalQuantity=rows.reduce((total,row)=>total+row.quantity,0);
   const totalValue=rows.reduce((total,row)=>total+row.value,0);
+  const fullProductTotal=DB.products.filter(matchesProductMainFilters).reduce((total,row)=>total+row.value,0);
   const uniqueProducts=new Set(rows.map(row=>row.product)).size;
   const activeMonths=new Set(selectedRecords().map(record=>record.month)).size;
   const monthlyAverage=activeMonths ? totalValue/activeMonths : 0;
@@ -656,6 +664,7 @@ function renderProducts(){
   $('productValueLabel').textContent=selectedGroups.size===0 ? 'Faturamento líquido' : `Total ${selectedGroups.size===1 ? 'do grupo selecionado' : 'dos grupos selecionados'}`;
   $('productValue').textContent=money.format(totalValue);
   $('productMonthlyAverage').textContent=money.format(monthlyAverage);
+  $('productParticipation').textContent=percent.format(fullProductTotal ? totalValue/fullProductTotal : 0);
   $('productTable').innerHTML=`<thead><tr>
     <th>Produto</th><th>Quantidade</th><th>Líquido</th><th>Média/mês</th><th>Grupo</th>
   </tr></thead><tbody>`+
